@@ -1,6 +1,6 @@
 require('dotenv').config();
-const {app, BrowserWindow, ipcMain} = require('electron/main')
-const path = require('node:path')
+const {app, BrowserWindow, ipcMain} = require('electron/main');
+const path = require('node:path');
 
 // supabase
 const {createClient} = require("@supabase/supabase-js");
@@ -13,17 +13,17 @@ const createWindow = () => {
         webPreferences: {
             preload: path.join(__dirname, 'preload.js')
         }
-    })
-    win.loadFile('index.html')
+    });
+    win.loadFile('index.html');
 }
 app.whenReady().then(() => {
-    ipcMain.handle('ping', () => 'pong')
-    createWindow()
+    ipcMain.handle('ping', () => 'pong');
+    createWindow();
 
     // macOS
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow()
+            createWindow();
         }
     })
 })
