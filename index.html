@@ -85,14 +85,16 @@
     let categoriesSelected = 0;
     const selected = { grade: null, category: [] };
     const startBtn = document.getElementById("start-game");
-    const p1 = document.getElementById("p1");
-    const p2 = document.getElementById("p2");
+    let players = [];
 
     function enableStartButton() {
         let namesSelected = true;
-            if(p1.value.trim() === "" || p2.value.trim() === "") {
-                namesSelected = false;
-            }
+        if(players.length > 0){
+            namesSelected = true;
+        }
+        else{
+            namesSelected = false;
+        }
         if (isGradeSeleced && categoriesSelected > 0 && namesSelected !== false) {
             startBtn.disabled = false;
             startBtn.classList.remove("bg-gray-300", "cursor-not-allowed");
@@ -169,8 +171,6 @@
             gradeContainer.appendChild(card);
         });
 
-        p1.addEventListener("input", enableStartButton);
-        p2.addEventListener("input", enableStartButton);
 
         startBtn.addEventListener("click", async () => {
             if(startBtn.disabled) return;
@@ -185,7 +185,7 @@
             const parameters = {
                 grade: selected.grade,
                 category: selected.category,
-                players: [p1.value.trim(), p2.value.trim()]
+                players: players
             };
             localStorage.setItem('parameters', JSON.stringify(parameters));
             window.location.href = "game.html";
@@ -198,9 +198,11 @@
     window.api.onPlayerAdded((player) => {
         if (list.children[0]?.tagName === 'P') list.innerHTML = '';
         const item = document.createElement('div');
-        item.className = 'p-2 border rounded-lg bg-white';
+        item.className = 'p-2 border rounded-lg bg-white added-player';
         item.textContent = `${player.first_name} ${player.last_name}`;
         list.appendChild(item);
+        players.push(player);
+        enableStartButton();
     });
 </script>
 </body>

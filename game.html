@@ -111,12 +111,17 @@
         <span class="font-semibold">Digitalna Brigada</span>
     </div>
     <script>
+        let game = [];
         let gameData = [];
         let parameters = {};
         let isCorrectAnswer = false;
         let questionIndex = -1;
         let limitIndex = 20;
         let questionImage = document.querySelector("img");
+        let playerIds = [];
+        let playerNames = [];
+        let playerCount = 0;
+
         
         let timerInterval;
         let timeRemaining = 15;  // Timer starts at 15 seconds
@@ -131,8 +136,17 @@
             enterData();
         };
         async function enterData(){
-            parameters = JSON.parse(localStorage.getItem('parameters'));   
-            gameData = await window.api.startGame(parameters.grade, parameters.category);
+            console.log("Loading game data...");
+            parameters = JSON.parse(localStorage.getItem('parameters'));
+            playerCount = parameters.players.length;
+            for(let i = 0; i < playerCount; i++){
+                playerIds.push(parseInt(parameters.players[i].id));
+                playerNames.push(`${parameters.players[i].first_name} ${parameters.players[i].last_name}`);
+            }
+            console.log(parameters.players);
+            game = await window.api.startGame(parameters.grade, parameters.category, playerIds);
+            gameData = game.questions;
+            console.log(gameData);
             await (shuffle(gameData));
             console.log("Zmesano: ", gameData);
             limitIndex = gameData.length -1;
@@ -141,17 +155,17 @@
         }
         function play(){
             questionIndex++;
-            if(questionIndex > limitIndex){
-                questionIndex = -1;
+            if(questionIndex >= limitIndex){
+                questionIndex = 0;
             }
-            if(gameData[questionIndex].image_path != null){
+            if(gameData[questionIndex].image_path != undefined){
                 questionImage.classList.remove("hidden");
                 questionImage.src = "./images/" + gameData[questionIndex].image_path + ".png";
             }
             else{
                 questionImage.classList.add("hidden");
             }
-            document.getElementById("turn").innerText = parameters.players[(questionIndex % 2)] + " je na vrsti";
+            document.getElementById("turn").innerText = playerNames[(questionIndex % playerCount)] + " je na vrsti";
             document.getElementById("question").innerText = gameData[questionIndex].text;
             document.getElementById("0").innerText = gameData[questionIndex].options[0];
             document.getElementById("1").innerText = gameData[questionIndex].options[1];
@@ -164,14 +178,8 @@
             const button = event.target;
             button.classList.add("border-blue-500", "bg-blue-50", "shadow-md", "selected");
             button.style.animation = "clickAnimation 1.5s linear 0s infinite alternate";
-            let answerIndex = 0;
-            if(gameData[questionIndex].category === 3){
-                answerIndex = button.id + 1;
-            }
-            else{
-                answerIndex = button.id;
-            }
-            isCorrectAnswer = await window.api.answer(gameData[questionIndex].id, parseInt(answerIndex));
+            console.log(questionIndex % playerCount, gameData[questionIndex].id, parseInt(button.id))
+            isCorrectAnswer = await window.api.answer(questionIndex % playerCount, gameData[questionIndex].id, parseInt(button.id));
             console.log(button.id);
             setTimeout(function (){
                 console.log(isCorrectAnswer);
