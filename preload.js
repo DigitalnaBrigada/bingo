@@ -8,9 +8,9 @@ contextBridge.exposeInMainWorld('api', {
     leaderboard: (groups, categories) =>
         ipcRenderer.invoke('leaderboard', { groups, categories }),
 
-    // Starts a game for given age group, categories, and number of players
-    startGame: (group, categories, numPlayers) =>
-        ipcRenderer.invoke('startGame', { group, categories, numPlayers }),
+    // Starts a game for given age group, categories, and array of user ids
+    startGame: (group, categories, players) =>
+        ipcRenderer.invoke('startGame', { group, categories, players }),
 
     // Submits an answer and returns correctness, bingo, and updated board
     answer: (playerId, questionId, selectedIndex) =>
