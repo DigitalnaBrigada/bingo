@@ -38,6 +38,38 @@ ipcMain.handle('get-age-groups', async () => {
     return data;
 });
 
+let currentGame = null;
+
+function createBingoBoard() {
+    const board = Array.from({ length: 5 }, () => Array(5).fill(false));
+    board[2][2] = true;
+    return board;
+}
+
+function selectRandomSquare(board) {
+    const unselected = [];
+    for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+            if (!board[r][c]) unselected.push([r, c]);
+        }
+    }
+    if (unselected.length === 0) return null;
+    return unselected[Math.floor(Math.random() * unselected.length)];
+}
+
+function hasBingo(board) {
+    for (let r = 0; r < 5; r++) {
+        if (board[r].every(Boolean)) return true;
+    }
+    for (let c = 0; c < 5; c++) {
+        if (board.map(row => row[c]).every(Boolean)) return true;
+    }
+    if ([0,1,2,3,4].every(i => board[i][i])) return true;
+    if ([0,1,2,3,4].every(i => board[i][4-i])) return true;
+
+    return false;
+}
+
 /**
  * loadMenu
  * Returns all AgeGroups and Categories
@@ -92,11 +124,11 @@ ipcMain.handle('leaderboard', async (event, {groups, categories}) => {
 
 /**
  * startGame
- * Params: { group: number, categories: number[] }
+ * Params: { group: number, categories: number[], numPlayers: number }
  * Returns: questions for that age group & any of the categories,
  *           excluding the correct_answer field.
  */
-ipcMain.handle('startGame', async (event, {group, categories}) => {
+ipcMain.handle('startGame', async (event, {group, categories, numPlayers}) => {
     try {
         if (!Array.isArray(categories) || categories.length === 0) {
             throw new Error('categories must be a non-empty array');
@@ -118,7 +150,21 @@ ipcMain.handle('startGame', async (event, {group, categories}) => {
             category_id: q.category_id,
         }));
 
-        return questions;
+        currentGame = {
+            ageGroup: group,
+            categories,
+            questions,
+            players: Array.from({ length: numPlayers }, (a, i) => ({
+                id: i + 1,
+                board: createBingoBoard(),
+            })),
+        };
+
+        return {
+            questions,
+            players: currentGame.players.map(p => p.board),
+        };
+
     } catch (err) {
         return {error: err.message};
     }
@@ -127,22 +173,74 @@ ipcMain.handle('startGame', async (event, {group, categories}) => {
 
 /**
  * answer
- * Params: { questionId: number, selectedIndex: number }
- * Returns: { correct: boolean }
+ * Params: { playerId, questionId, selectedIndex }
+ * Returns: { correct, bingo, board }
  */
-ipcMain.handle('answer', async (event, {questionId, selectedIndex}) => {
+ipcMain.handle('answer', async (event, { playerId, questionId, selectedIndex }) => {
     try {
-        const {data, error} = await supabase
+        if (!currentGame) throw new Error('No game in progress');
+
+        const player = currentGame.players.find(p => p.id === playerId);
+        if (!player) throw new Error('Invalid player ID');
+
+        const question = currentGame.questions.find(q => q.id === questionId);
+        if (!question) throw new Error('Question not found');
+
+        const { data, error } = await supabase
             .from('Questions')
             .select('correct_answer')
             .eq('id', questionId)
             .single();
-
         if (error) throw error;
 
         const correct = data.correct_answer === selectedIndex;
-        return {correct};
+        let bingo = false;
+        let points = 0;
+
+        if (correct) {
+            points += 10;
+
+            const pos = selectRandomSquare(player.board);
+            if (pos) {
+                const [r, c] = pos;
+                player.board[r][c] = true;
+            }
+
+            if (hasBingo(player.board)) {
+                bingo = true;
+                points += 100;
+            }
+
+            const { data: existing, error: fetchErr } = await supabase
+                .from('Leaderboard')
+                .select('*')
+                .eq('user_id', player.user_id)
+                .eq('age_group_id', question.age_group_id)
+                .eq('category_id', question.category_id)
+                .maybeSingle();
+
+            if (fetchErr) throw fetchErr;
+
+            if (existing) {
+                const { error: updateErr } = await supabase
+                    .from('Leaderboard')
+                    .update({ score: existing.score + points })
+                    .eq('id', existing.id);
+                if (updateErr) throw updateErr;
+            } else {
+                const { error: insertErr } = await supabase.from('Leaderboard').insert({
+                    user_id: player.user_id,
+                    age_group_id: question.age_group_id,
+                    category_id: question.category_id,
+                    score: points,
+                });
+                if (insertErr) throw insertErr;
+            }
+        }
+
+        return { correct, bingo, board: player.board };
     } catch (err) {
-        return {error: err.message};
+        console.error(err);
+        return { error: err.message };
     }
 });
