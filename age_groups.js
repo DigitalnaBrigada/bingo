@@ -42,7 +42,7 @@ async function loadAgeGroups() {
     startBtn.addEventListener("click", () => {
         if (selectedId) {
             console.log("Selected Age Group ID:", selectedId);
-            window.location.href = "game.html";
+            window.location.href = "bingo_game.html";
         }
     });
 }
