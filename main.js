@@ -10,13 +10,20 @@ let win, add_player_window;
 
 const createWindow = () => {
     win = new BrowserWindow({
-        width: 800,
-        height: 800,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js')
         }
     });
-    win.loadFile('index.html');
+
+    win.maximize();
+
+    // DEV → load Vite
+    if (!app.isPackaged) {
+        win.loadURL("http://localhost:5173");
+    } else {
+        // PROD → load Vite build
+        win.loadFile(path.join(__dirname, "../dist/index.html"));
+    }
 }
 
 function createAddPlayerWindow() {
