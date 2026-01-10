@@ -2,19 +2,24 @@
     "name": "bingo",
     "version": "1.0.0",
     "description": "First project for RUPS",
-    "main": "index.js",
+    "main": "main.js",
     "scripts": {
-        "start": "electron .",
-        "test": "test"
+        "dev": "vite",
+        "electron": "electron main.js",
+        "start": "concurrently \"vite\" \"electron .\"",
+        "build": "vite build"
     },
     "author": "DigitalnaBrigada",
     "license": "ISC",
     "devDependencies": {
+        "concurrently": "^9.2.1",
         "electron": "^38.4.0"
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.78.0",
         "dotenv": "^17.2.3",
-        "update": "^0.7.4"
+        "phaser": "^3.90.0",
+        "update": "^0.7.4",
+        "vite": "^7.3.1"
     }
 }
