@@ -23,9 +23,7 @@ import LogicScene from './scenes/logicScene';
 import DesktopScene from './scenes/desktopScene';
 import LinuxScene from './scenes/linuxScene';
 import EscapeScene from "./scenes/EscapeScene.js";
-import BingoSettingsScene from './scenes/bingoSettingsScene';
 import BingoScene from './scenes/bingoScene';
-
 
 const config = {
     type: Phaser.AUTO,
@@ -64,7 +62,6 @@ const config = {
         EscapeScene,
 
         // še novejše scene
-        BingoSettingsScene,
         BingoScene,
     ],
     physics: {
