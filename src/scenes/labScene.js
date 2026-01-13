@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 export default class LabScene extends Phaser.Scene {
     modalElement;
+    bingoSettingsOpen = false;
 
     constructor() {
         super('LabScene');
@@ -53,7 +54,7 @@ export default class LabScene extends Phaser.Scene {
             .setInteractive({useHandCursor: true});
 
         telescope.on('pointerdown', () => {
-            if (this.modalElement && this.modalElement.style.display === 'flex') {
+            if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                 return;
             }
             this.cameras.main.fade(300, 0, 0, 0);
@@ -155,7 +156,7 @@ export default class LabScene extends Phaser.Scene {
         // interaktivni zaslon
         screen.setInteractive({useHandCursor: true});
         screen.on('pointerdown', () => {
-            if (this.modalElement && this.modalElement.style.display === 'flex') {
+            if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                 return;
             }
             this.scene.start('DesktopScene');
@@ -268,7 +269,7 @@ export default class LabScene extends Phaser.Scene {
             .on('pointerover', () => logoutButton.setStyle({color: '#0044cc'}))
             .on('pointerout', () => logoutButton.setStyle({color: '#0066ff'}))
             .on('pointerdown', () => {
-                if (this.modalElement && this.modalElement.style.display === 'flex') {
+                if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                     return;
                 }
                 this.scene.start('LoginScene');
@@ -303,10 +304,36 @@ export default class LabScene extends Phaser.Scene {
                 scoreButtonBg.fillRoundedRect(width - buttonWidth - rightMargin, topMargin, buttonWidth, buttonHeight, cornerRadius);
             })
             .on('pointerdown', () => {
-                if (this.modalElement && this.modalElement.style.display === 'flex') {
+                if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                     return;
                 }
                 this.scene.start('ScoreboardScene', {cameFromMenu: true});
+            });
+
+        const settingButtonBg = this.add.graphics();
+        settingButtonBg.fillStyle(0x3399ff, 1);
+        const settingButtonX = width - 2 * buttonWidth - 2* rightMargin;
+        settingButtonBg.fillRoundedRect(settingButtonX, topMargin, buttonWidth, buttonHeight, cornerRadius);
+
+        const settingButton = this.add.text(settingButtonX + 1/2 * buttonWidth, topMargin + buttonHeight / 2, 'Nastavitve', {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#ffffff'
+        })
+            .setOrigin(0.5)
+            .setInteractive({useHandCursor: true})
+            .on('pointerover', () => {
+                settingButtonBg.clear();
+                settingButtonBg.fillStyle(0x0f5cad, 1);
+                settingButtonBg.fillRoundedRect(settingButtonX, topMargin, buttonWidth, buttonHeight, cornerRadius);
+            })
+            .on('pointerout', () => {
+                settingButtonBg.clear();
+                settingButtonBg.fillStyle(0x3399ff, 1);
+                settingButtonBg.fillRoundedRect(settingButtonX, topMargin, buttonWidth, buttonHeight, cornerRadius);
+            })
+            .on('pointerdown', async () => {
+                this.showSettingsModal();
             });
 
         // Odstranjeni gumbi Naloga 1 in Naloga 5
@@ -317,7 +344,7 @@ export default class LabScene extends Phaser.Scene {
             .setScale(0.35)
             .setInteractive({useHandCursor: true})
             .on('pointerdown', () => {
-                if (this.modalElement && this.modalElement.style.display === 'flex') {
+                if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                     return;
                 }
                 this.scene.start('ChemistryScene1');
@@ -405,7 +432,7 @@ export default class LabScene extends Phaser.Scene {
         abacusContainer.add(zone);
 
         zone.on('pointerdown', () => {
-            if (this.modalElement && this.modalElement.style.display === 'flex') {
+            if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                 return;
             }
             this.cameras.main.fade(300, 0, 0, 0);
@@ -592,7 +619,7 @@ export default class LabScene extends Phaser.Scene {
         const led2 = this.add.circle(x + width * 0.005, y + keypadHeight * 0.45, width * 0.002, 0x4b5563);
 
         this.keypadButton.on('pointerdown', () => {
-            if (this.modalElement && this.modalElement.style.display === 'flex') {
+            if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                 return;
             }
             this.showModal();
@@ -832,6 +859,10 @@ export default class LabScene extends Phaser.Scene {
         if (messageEl) {
             messageEl.style.display = 'none';
         }
+    }
+
+    async showSettingsModal() {
+        
     }
 
 }
