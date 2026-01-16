@@ -870,6 +870,27 @@ export default class LabScene extends Phaser.Scene {
         const domElement = this.add.dom(width / 2, height / 3)
             .createFromHTML(this.menuHTML());
         domElement.setOrigin(0.25);
+
+        overlay.setDepth(1000);
+        domElement.setDepth(1001);
+
+        overlay.on('pointerdown', (pointer) => {
+            const modalRect = domElement.node.getBoundingClientRect();
+            if (
+                pointer.event.clientX < modalRect.left ||
+                pointer.event.clientX > modalRect.right ||
+                pointer.event.clientY < modalRect.top ||
+                pointer.event.clientY > modalRect.bottom
+            ) {
+                domElement.destroy();
+                overlay.destroy();
+                this.bingoSettingsOpen = false;
+            }
+        });
+
+        domElement.node.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+        });
     }
         menuHTML() {
             return `
