@@ -862,7 +862,38 @@ export default class LabScene extends Phaser.Scene {
     }
 
     async showSettingsModal() {
-        
+        this.bingoSettingsOpen = true;
+        const {width, height} = this.scale;
+        const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.5)
+            .setOrigin(0)
+            .setInteractive();
+        const domElement = this.add.dom(width / 2, height / 3)
+            .createFromHTML(this.menuHTML());
+        domElement.setOrigin(0.25);
+    }
+        menuHTML() {
+            return `
+<main class="w-full max-w-xl bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-6 space-y-6 font-sans">
+    <header class="text-center space-y-2">
+        <h1 class="text-3xl font-bold text-gray-800">Nastavitve</h1>
+        <h2 class="text-xl font-bold text-gray-800">Bingo Kviza</h2>
+    </header>
+
+    <section>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Izberi težavnost</label>
+        <div id="grade-cards" class="grid grid-cols-1 sm:grid-cols-1 gap-2 text-center"></div>
+    </section>
+
+    <section>
+        <label class="block text-sm font-semibold text-gray-700 mb-3">Izberi predmet (vsaj 1)</label>
+        <div id="category-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+    </section>
+
+    <footer class="pt-6 text-center text-sm text-gray-500 border-t border-gray-200">
+        <span class="font-semibold">Digitalna Brigada</span>
+    </footer>
+</main>
+        `;
     }
 
 }
