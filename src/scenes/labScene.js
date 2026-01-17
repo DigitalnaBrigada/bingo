@@ -891,6 +891,60 @@ export default class LabScene extends Phaser.Scene {
         domElement.node.addEventListener('pointerdown', (e) => {
             e.stopPropagation();
         });
+
+        const gradeCardsContainer = domElement.node.querySelector("#grade-cards");
+        const categoryCardsContainer = domElement.node.querySelector("#category-cards");
+
+        let selectedGrade = null;
+        const selectedCategories = new Set();
+
+        const { grades, categories } = await window.api.settingsMenu();
+
+        grades.forEach((g, index) => {
+            const div = document.createElement("div");
+            div.dataset.id = g.id;
+            div.className = "p-4 border-2 border-gray-200 rounded-xl cursor-pointer transition-all hover:scale-105 hover:shadow-lg text-center";
+            div.innerHTML = `<h3 class="font-semibold text-lg mb-1">${g.age_group}</h3>
+                         <p class="text-sm text-gray-500">Leta ${g.min_age} – ${g.max_age}</p>`;
+            div.addEventListener("click", () => {
+                if (selectedGrade === g.id) return;
+                gradeCardsContainer.querySelectorAll("div").forEach(el => {
+                    el.classList.remove("border-blue-500", "bg-blue-50", "shadow-md");
+                    el.classList.add("border-gray-200", "bg-white");
+                });
+                div.classList.add("border-blue-500", "bg-blue-50", "shadow-md");
+                selectedGrade = g.id;
+            });
+            gradeCardsContainer.appendChild(div);
+
+            if (index === 0) {
+                div.classList.add("border-blue-500", "bg-blue-50", "shadow-md");
+                selectedGrade = g.id;
+            }
+        });
+
+        categories.forEach((c) => {
+            const div = document.createElement("div");
+            div.dataset.id = c.id;
+            div.className = "p-4 border-2 border-gray-200 rounded-xl cursor-pointer transition-all hover:scale-105 hover:shadow-lg";
+            div.innerHTML = `<h3 class="font-semibold text-lg">${c.name}</h3>`;
+            div.addEventListener("click", () => {
+                if (selectedCategories.has(c.id)) {
+                    if (selectedCategories.size === 1) return;
+                    selectedCategories.delete(c.id);
+                    div.classList.remove("border-green-500", "bg-green-50", "shadow-md");
+                    div.classList.add("border-gray-200", "bg-white");
+                } else {
+                    selectedCategories.add(c.id);
+                    div.classList.remove("border-gray-200", "bg-white");
+                    div.classList.add("border-green-500", "bg-green-50", "shadow-md");
+                }
+            });
+            categoryCardsContainer.appendChild(div);
+
+            selectedCategories.add(c.id);
+            div.classList.add("border-green-500", "bg-green-50", "shadow-md");
+        });
     }
         menuHTML() {
             return `
