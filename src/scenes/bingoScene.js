@@ -20,19 +20,10 @@ export default class BingoScene extends Phaser.Scene {
     }
 
     startRainbowAnimation(btn) {
-        const colors = [
-            0xff0000, // red
-            0xffff00, // yellow
-            0x90ee90, // light green
-            0xadd8e6, // light blue
-            0xddddfd  // light purple
-        ];
-
+        const colors = [0xff0000, 0xffff00, 0x90ee90, 0xadd8e6, 0xddddfd];
         let index = 0;
 
-        if (btn.rainbowEvent) {
-            btn.rainbowEvent.remove();
-        }
+        if (btn.rainbowEvent) btn.rainbowEvent.remove();
 
         btn.rainbowEvent = this.time.addEvent({
             delay: 150,
@@ -44,7 +35,6 @@ export default class BingoScene extends Phaser.Scene {
         });
     }
 
-
     async create() {
         const { width, height } = this.scale;
 
@@ -52,50 +42,48 @@ export default class BingoScene extends Phaser.Scene {
         this.add.rectangle(0, 0, width, height, 0xf1f5f9).setOrigin(0);
 
         /* ---------- Header ---------- */
-        this.turnText = this.add.text(width / 2, 30, '', {
-            fontSize: '20px',
+        this.turnText = this.add.text(width / 2, 28, '', {
+            fontSize: '22px',
             color: '#ffffff',
-            backgroundColor: '#3b82f6',
-            padding: { x: 12, y: 6 }
+            backgroundColor: '#2563eb',
+            padding: { x: 18, y: 8 }
         }).setOrigin(0.5);
 
-        this.timerText = this.add.text(width - 80, 30, '⏱️ 15s', {
+        this.timerText = this.add.text(width - 90, 28, '⏱️ 15s', {
             fontSize: '16px',
             color: '#111827',
             backgroundColor: '#e5e7eb',
-            padding: { x: 10, y: 6 }
+            padding: { x: 12, y: 6 }
         }).setOrigin(0.5);
 
-        this.progressBg = this.add.rectangle(width / 2, 65, width - 100, 10, 0xe5e7eb)
-            .setOrigin(0.5);
+        this.progressBg = this.add.rectangle(width / 2, 68, width - 140, 12, 0xe5e7eb).setOrigin(0.5);
 
         this.progressBar = this.add.rectangle(
             this.progressBg.x - this.progressBg.width / 2,
-            65,
+            68,
             this.progressBg.width,
-            10,
-            0x3b82f6
+            12,
+            0x2563eb
         ).setOrigin(0, 0.5);
 
         /* ---------- Question Card ---------- */
-        this.questionBox = this.add.rectangle(width / 2, 150, width - 120, 80, 0xe9d5ff)
+        this.questionBox = this.add.rectangle(width / 2, 150, width - 180, 90, 0xe9d5ff)
             .setStrokeStyle(2, 0xd8b4fe);
 
         this.questionText = this.add.text(width / 2, 150, '', {
-            fontSize: '18px',
+            fontSize: '20px',
             color: '#111827',
-            wordWrap: { width: width - 160 },
+            wordWrap: { width: width - 220 },
             align: 'center'
         }).setOrigin(0.5);
 
         /* ---------- Answer Buttons ---------- */
         this.answerButtons = [];
-
         const btnPositions = [
-            [width / 2 - 220, 260],
-            [width / 2 + 220, 260],
-            [width / 2 - 220, 340],
-            [width / 2 + 220, 340]
+            [width / 2 - 260, 260],
+            [width / 2 + 260, 260],
+            [width / 2 - 260, 340],
+            [width / 2 + 260, 340]
         ];
 
         btnPositions.forEach((pos, idx) => {
@@ -103,22 +91,14 @@ export default class BingoScene extends Phaser.Scene {
             this.answerButtons.push(btn);
         });
 
-        /* ---------- Load Game ---------- */
         await this.loadGame();
     }
-
-    /* ================= GAME INIT ================= */
 
     async loadGame() {
         this.playerNames = [localStorage.getItem('username'), 'Alien'];
         this.playerIds = [1, 2];
 
-        const game = await window.api.startGame(
-            1,
-            [1, 2],
-            this.playerIds
-        );
-        console.log('Game started:', game);
+        const game = await window.api.startGame(1, [1, 2], this.playerIds);
         this.gameData = Phaser.Utils.Array.Shuffle(game.questions || []);
         this.boards = game.players.map(p => p.board);
         this.limitIndex = this.gameData.length - 1;
@@ -126,8 +106,6 @@ export default class BingoScene extends Phaser.Scene {
         this.renderBoards();
         this.nextQuestion();
     }
-
-    /* ================= QUESTIONS ================= */
 
     nextQuestion() {
         if (this.gameOver) return;
@@ -146,28 +124,22 @@ export default class BingoScene extends Phaser.Scene {
             btn.container.setAlpha(1);
             btn.container.setFillStyle(0xffffff);
             btn.enabled = true;
-
-            if (btn.rainbowEvent) {
-                btn.rainbowEvent.remove();
-                btn.rainbowEvent = null;
-            }
+            if (btn.rainbowEvent) btn.rainbowEvent.remove();
         });
-
 
         this.startTimer();
         this.highlightTurn();
     }
 
-    /* ================= ANSWERS ================= */
     createAnswerButton(x, y, index) {
-        const container = this.add.rectangle(x, y, 300, 60, 0xffffff)
+        const container = this.add.rectangle(x, y, 340, 64, 0xffffff)
             .setStrokeStyle(2, 0xd1d5db)
             .setInteractive({ useHandCursor: true });
 
         const text = this.add.text(x, y, '', {
-            fontSize: '16px',
+            fontSize: '17px',
             color: '#111827',
-            wordWrap: { width: 260 },
+            wordWrap: { width: 300 },
             align: 'center'
         }).setOrigin(0.5);
 
@@ -183,12 +155,9 @@ export default class BingoScene extends Phaser.Scene {
                     this.gameData[this.questionIndex].id,
                     index
                 );
-                console.log('Answer result:', result);
-                if(result.correct) {
-                    this.startRainbowAnimation(btn);
-                } else {
-                    btn.container.setFillStyle(0xef4444); // Red for incorrect
-                }
+
+                if (result.correct) this.startRainbowAnimation(btn);
+                else btn.container.setFillStyle(0xef4444);
 
                 if (Array.isArray(result?.board)) {
                     this.boards[this.currentPlayer] = result.board;
@@ -199,17 +168,13 @@ export default class BingoScene extends Phaser.Scene {
                     this.endGame(this.currentPlayer);
                     return;
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) {}
 
             this.time.delayedCall(900, () => this.nextQuestion());
         });
 
         return btn;
     }
-
-    /* ================= TIMER ================= */
 
     startTimer() {
         if (this.timerEvent) this.timerEvent.remove();
@@ -222,10 +187,8 @@ export default class BingoScene extends Phaser.Scene {
             loop: true,
             callback: () => {
                 if (this.gameOver) return;
-
                 this.timeRemaining--;
                 this.updateTimerUI();
-
                 if (this.timeRemaining <= 0) {
                     this.timerEvent.remove();
                     this.nextQuestion();
@@ -236,37 +199,30 @@ export default class BingoScene extends Phaser.Scene {
 
     updateTimerUI() {
         this.timerText.setText(`⏱️ ${this.timeRemaining}s`);
+        this.progressBar.width = this.progressBg.width * (this.timeRemaining / 15);
 
-        const ratio = this.timeRemaining / 15;
-        this.progressBar.width = this.progressBg.width * ratio;
-
-        if (this.timeRemaining <= 5) {
-            this.progressBar.setFillStyle(0xf43f5e);
-        } else if (this.timeRemaining <= 10) {
-            this.progressBar.setFillStyle(0xf59e0b);
-        } else {
-            this.progressBar.setFillStyle(0x3b82f6);
-        }
+        if (this.timeRemaining <= 5) this.progressBar.setFillStyle(0xf43f5e);
+        else if (this.timeRemaining <= 10) this.progressBar.setFillStyle(0xf59e0b);
+        else this.progressBar.setFillStyle(0x2563eb);
     }
 
-    /* ================= BOARDS ================= */
-
     renderBoards() {
-        const startY = 600;
-        const spacingX = 300;
+        const startY = 620;
+        const spacingX = 420;
 
         this.boardContainers = [];
 
         this.playerNames.forEach((name, idx) => {
-            const x = 150 + idx * spacingX;
+            const x = this.scale.width / 2 - spacingX / 2 + idx * spacingX;
             const y = startY;
 
-            const panel = this.add.rectangle(x, y, 230, 260, 0xffffff)
-                .setStrokeStyle(2, 0xd1d5db);
+            const panel = this.add.rectangle(x, y, 340, 380, 0xffffff)
+                .setStrokeStyle(3, 0xd1d5db);
 
-            const title = this.add.text(x, y - 120, name, {
-                fontSize: '14px',
-                color: '#111827'
+            const title = this.add.text(x, y - 205, name, {
+                fontSize: '20px',
+                color: '#111827',
+                fontStyle: 'bold'
             }).setOrigin(0.5);
 
             const cells = [];
@@ -274,23 +230,21 @@ export default class BingoScene extends Phaser.Scene {
 
             for (let r = 0; r < 5; r++) {
                 for (let c = 0; c < 5; c++) {
-                    const cx = x - 90 + c * 45;
-                    const cy = y - 80 + r * 45;
+                    const cx = x - 120 + c * 60;
+                    const cy = y - 140 + r * 60;
 
                     const selected = this.boards[idx]?.[r]?.[c];
                     const isCenter = r === 2 && c === 2;
 
                     const cell = this.add.rectangle(
-                        cx,
-                        cy,
-                        38,
-                        38,
-                        selected ? 0x3b82f6 : 0xffffff
+                        cx, cy, 52, 52,
+                        selected ? 0x2563eb : (isCenter ? 0xfef3c7 : 0xffffff)
                     ).setStrokeStyle(2, 0xd1d5db);
 
-                    const label = this.add.text(cx, cy,
+                    const label = this.add.text(
+                        cx, cy,
                         isCenter ? '★' : String(n),
-                        { fontSize: '14px', color: '#111827' }
+                        { fontSize: isCenter ? '22px' : '16px', color: '#111827' }
                     ).setOrigin(0.5);
 
                     cells.push({ cell, label });
@@ -306,11 +260,12 @@ export default class BingoScene extends Phaser.Scene {
         const board = this.boards[playerIdx];
         const ui = this.boardContainers[playerIdx];
         let i = 0;
+
         for (let r = 0; r < 5; r++) {
             for (let c = 0; c < 5; c++) {
                 const selected = board[r][c];
                 ui.cells[i].cell.setFillStyle(
-                    selected ? (r === 2 && c === 2 ? 0xfacc15 : 0x3b82f6) : 0xffffff
+                    selected ? (r === 2 && c === 2 ? 0xfacc15 : 0x2563eb) : 0xffffff
                 );
                 i++;
             }
@@ -320,13 +275,11 @@ export default class BingoScene extends Phaser.Scene {
     highlightTurn() {
         this.boardContainers.forEach((b, idx) => {
             b.panel.setStrokeStyle(
-                idx === this.currentPlayer ? 4 : 2,
-                idx === this.currentPlayer ? 0x3b82f6 : 0xd1d5db
+                idx === this.currentPlayer ? 5 : 3,
+                idx === this.currentPlayer ? 0x2563eb : 0xd1d5db
             );
         });
     }
-
-    /* ================= END ================= */
 
     endGame(winnerIdx) {
         this.gameOver = true;
@@ -334,27 +287,24 @@ export default class BingoScene extends Phaser.Scene {
 
         const { width, height } = this.scale;
 
-        const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.4)
-            .setOrigin(0);
+        this.add.rectangle(0, 0, width, height, 0x000000, 0.4).setOrigin(0);
 
-        const modal = this.add.rectangle(width / 2, height / 2, 400, 220, 0xffffff)
+        this.add.rectangle(width / 2, height / 2, 420, 240, 0xffffff)
             .setStrokeStyle(2, 0xd1d5db);
 
         this.add.text(width / 2, height / 2 - 40,
             `${this.playerNames[winnerIdx]} je zmagal! 🏆`,
-            { fontSize: '20px', color: '#111827' }
+            { fontSize: '22px', color: '#111827' }
         ).setOrigin(0.5);
 
-        const btn = this.add.rectangle(width / 2, height / 2 + 50, 200, 50, 0x2563eb)
+        const btn = this.add.rectangle(width / 2, height / 2 + 60, 220, 54, 0x2563eb)
             .setInteractive({ useHandCursor: true });
 
-        this.add.text(width / 2, height / 2 + 50, 'Nova igra', {
-            fontSize: '16px',
+        this.add.text(width / 2, height / 2 + 60, 'Nova igra', {
+            fontSize: '17px',
             color: '#ffffff'
         }).setOrigin(0.5);
 
-        btn.on('pointerdown', () => {
-            this.scene.start('BingoSettingScene');
-        });
+        btn.on('pointerdown', () => this.scene.start('EscapeScene'));
     }
 }
