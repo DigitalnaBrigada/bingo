@@ -91,6 +91,23 @@ export default class BingoScene extends Phaser.Scene {
             this.answerButtons.push(btn);
         });
 
+        const backButton = this.add.text(12, 10, '↩ Back', {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#387affff',
+            padding: { x: 20, y: 10 }
+            })
+            .setOrigin(0, 0)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerover', () => backButton.setStyle({ color: '#0054fdff' }))
+            .on('pointerout', () => backButton.setStyle({ color: '#387affff' }))
+            .on('pointerdown', () => {
+                this.cameras.main.fade(300, 0, 0, 0);
+                this.time.delayedCall(300, () => {
+                this.scene.start('LabScene');
+            });
+        });
+        /* ---------- Load Game ---------- */
         await this.loadGame();
     }
 
@@ -117,6 +134,9 @@ export default class BingoScene extends Phaser.Scene {
         this.currentPlayer = this.questionIndex % this.playerNames.length;
 
         this.turnText.setText(`${this.playerNames[this.currentPlayer]}'s turn`);
+        this.turnText.setBackgroundColor(
+            this.currentPlayer === 0 ? '#3b82f6' : '#10b981'
+        );
         this.questionText.setText(q.text);
 
         this.answerButtons.forEach((btn, i) => {
@@ -127,9 +147,44 @@ export default class BingoScene extends Phaser.Scene {
             if (btn.rainbowEvent) btn.rainbowEvent.remove();
         });
 
+        const isHumanTurn = this.currentPlayer === 0;
+
+        this.answerButtons.forEach(btn => {
+            btn.enabled = isHumanTurn;
+            btn.container.disableInteractive();
+
+            if (isHumanTurn) {
+                btn.container.setInteractive({ useHandCursor: true });
+                btn.container.setAlpha(1);
+            } else {
+                btn.container.setAlpha(0.5);
+            }
+        });
+
+        if (this.currentPlayer === 1) {
+            this.time.delayedCall(1000, () => {
+                this.alienAnswer();
+            });
+        }
+
         this.startTimer();
         this.highlightTurn();
     }
+
+    alienAnswer() {
+        const chanceCorrect = 0.4;
+        let index;
+        if (Math.random() < chanceCorrect) {
+            index = this.gameData[this.questionIndex].correctIndex;
+            console.log("Correct: ", index);
+        } else {
+            index = Math.floor(Math.random() * 4);
+            console.log('Rng:', index);
+        }
+        // Overall cca. 55%
+        this.answerButtons[index]?.container.emit('pointerdown');
+    }
+
 
     createAnswerButton(x, y, index) {
         const container = this.add.rectangle(x, y, 340, 64, 0xffffff)
@@ -146,9 +201,13 @@ export default class BingoScene extends Phaser.Scene {
         const btn = { container, text, enabled: true };
 
         container.on('pointerdown', async () => {
-            if (!btn.enabled || this.gameOver) return;
+            if (this.gameOver){ return; }
+            if(!btn.enabled && this.currentPlayer===0){
+                console.log("nope");
+                return;
+            } 
             btn.enabled = false;
-
+            console.log("nopeee");
             try {
                 const result = await window.api.answer(
                     this.currentPlayer,
