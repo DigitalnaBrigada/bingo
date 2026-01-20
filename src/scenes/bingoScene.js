@@ -203,11 +203,9 @@ export default class BingoScene extends Phaser.Scene {
         container.on('pointerdown', async () => {
             if (this.gameOver){ return; }
             if(!btn.enabled && this.currentPlayer===0){
-                console.log("nope");
                 return;
             } 
             btn.enabled = false;
-            console.log("nopeee");
             try {
                 const result = await window.api.answer(
                     this.currentPlayer,
