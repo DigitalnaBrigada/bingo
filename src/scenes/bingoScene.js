@@ -38,10 +38,8 @@ export default class BingoScene extends Phaser.Scene {
     async create() {
         const { width, height } = this.scale;
 
-        /* ---------- Background ---------- */
         this.add.rectangle(0, 0, width, height, 0xf1f5f9).setOrigin(0);
 
-        /* ---------- Header ---------- */
         this.turnText = this.add.text(width / 2, 28, '', {
             fontSize: '22px',
             color: '#ffffff',
@@ -66,7 +64,6 @@ export default class BingoScene extends Phaser.Scene {
             0x2563eb
         ).setOrigin(0, 0.5);
 
-        /* ---------- Question Card ---------- */
         this.questionBox = this.add.rectangle(width / 2, 150, width - 180, 90, 0xe9d5ff)
             .setStrokeStyle(2, 0xd8b4fe);
 
@@ -77,7 +74,6 @@ export default class BingoScene extends Phaser.Scene {
             align: 'center'
         }).setOrigin(0.5);
 
-        /* ---------- Answer Buttons ---------- */
         this.answerButtons = [];
         const btnPositions = [
             [width / 2 - 260, 260],
@@ -107,7 +103,40 @@ export default class BingoScene extends Phaser.Scene {
                 this.scene.start('LabScene');
             });
         });
-        /* ---------- Load Game ---------- */
+
+        // Ejlien
+        this.alien = this.add.container(
+            this.questionBox.x,
+            this.questionBox.y+150
+        );
+        this.alien.setVisible(false);
+
+        // Head
+        const head = this.add.circle(0, 0, 36, 0x22c55e)
+            .setStrokeStyle(3, 0x166534);
+
+        // Eyes
+        const eyeLeft = this.add.circle(-18, -16, 6, 0x000000);
+        const eyeRight = this.add.circle(18, -16, 6, 0x000000);
+
+        // Antennas
+        const antennaLeft = this.add.rectangle(-20, -30, 4, 18, 0x166534);
+        const antennaRight = this.add.rectangle(20, -30, 4, 18, 0x166534);
+        const antennaTipLeft = this.add.circle(-20, -40, 4, 0x22c55e);
+        const antennaTipRight = this.add.circle(20, -40, 4, 0x22c55e);
+
+        // Add to container
+        this.alien.add([
+            antennaLeft,
+            antennaRight,
+            antennaTipLeft,
+            antennaTipRight,
+            head,
+            eyeLeft,
+            eyeRight
+]);
+
+
         await this.loadGame();
     }
 
@@ -132,12 +161,20 @@ export default class BingoScene extends Phaser.Scene {
 
         const q = this.gameData[this.questionIndex];
         this.currentPlayer = this.questionIndex % this.playerNames.length;
+        this.alien.setVisible(this.currentPlayer === 1);
 
         this.turnText.setText(`${this.playerNames[this.currentPlayer]}'s turn`);
         this.turnText.setBackgroundColor(
             this.currentPlayer === 0 ? '#3b82f6' : '#10b981'
         );
         this.questionText.setText(q.text);
+
+        if (this.currentPlayer === 1) {
+            this.questionBox.setFillStyle(0x10b981).setStrokeStyle(2, 0x059669);
+        } else {
+            this.questionBox.setFillStyle(0xe9d5ff).setStrokeStyle(2, 0xd8b4fe);
+        }
+
 
         this.answerButtons.forEach((btn, i) => {
             btn.text.setText(q.options[i]);
