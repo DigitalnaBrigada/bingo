@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('api', {
     },
     registerPlayer: (player) => ipcRenderer.invoke('register-player', player),
     loginPlayer: (creds) => ipcRenderer.invoke('login-player', creds),
+    getCurrentUser: () => ipcRenderer.invoke('get-current-user'),
     onPlayerAdded: (callback) => ipcRenderer.on('player-added', (_, player) => callback(player)),
     // Fetches all age groups and categories
     loadMenu: () => ipcRenderer.invoke('loadMenu'),

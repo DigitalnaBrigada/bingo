@@ -3,17 +3,10 @@ import Phaser from 'phaser';
 export default class LoginScene extends Phaser.Scene {
     constructor() {
         super('LoginScene');
+        this.mode = 'login'; // 'login' | 'register'
     }
 
     create() {
-        var users = JSON.parse(localStorage.getItem('users')) || [];
-
-        // this.add.text(200, 100, 'Vnesi svoje uporabniško ime in geslo!', {
-        //     fontFamily: 'Arial',
-        //     fontSize: '20px',
-        //     color: '#222'
-        // });
-
         const { width, height } = this.scale;
 
         // --- 1️⃣ Ozadje laboratorija (enako kot v LabScene) ---
@@ -22,44 +15,6 @@ export default class LoginScene extends Phaser.Scene {
         // tla
         this.add.rectangle(0, height - 150, width, 150, 0xd4c4a8).setOrigin(0);
 
-        // miza
-        const tableX = width / 2;
-        const tableY = height / 2 + 50;
-        const tableWidth = 500;
-        const tableHeight = 250;
-
-        // zgornja ploskev mize
-        this.add.rectangle(tableX, tableY, tableWidth, 30, 0x8b4513).setOrigin(0.5);
-        // površina mize z mrežo
-        const surface = this.add.rectangle(tableX, tableY + 15, tableWidth - 30, tableHeight - 30, 0xa0826d).setOrigin(0.5, 0);
-        const grid = this.add.graphics();
-        grid.lineStyle(1, 0x8b7355, 0.3);
-        const gridSize = 30;
-        const gridStartX = tableX - (tableWidth - 30) / 2;
-        const gridStartY = tableY + 15;
-        const gridEndX = tableX + (tableWidth - 30) / 2;
-        const gridEndY = tableY + 15 + (tableHeight - 30);
-
-        for (let x = gridStartX; x <= gridEndX; x += gridSize) {
-            grid.beginPath();
-            grid.moveTo(x, gridStartY);
-            grid.lineTo(x, gridEndY);
-            grid.strokePath();
-        }
-        for (let y = gridStartY; y <= gridEndY; y += gridSize) {
-            grid.beginPath();
-            grid.moveTo(gridStartX, y);
-            grid.lineTo(gridEndX, y);
-            grid.strokePath();
-        }
-
-        // nogice mize
-        const legWidth = 20;
-        const legHeight = 150;
-        this.add.rectangle(tableX - tableWidth / 2 + 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
-        this.add.rectangle(tableX + tableWidth / 2 - 40, tableY + tableHeight / 2 + 20, legWidth, legHeight, 0x654321);
-
-        // okvir
         const panelWidth = 500;
         const panelHeight = 340;
         const panelX = width / 2 - panelWidth / 2;
@@ -71,10 +26,8 @@ export default class LoginScene extends Phaser.Scene {
         panel.lineStyle(3, 0xcccccc, 1);
         panel.strokeRoundedRect(panelX, panelY, panelWidth, panelHeight, 25);
 
-        // naslov
-        this.add.text(width / 2, panelY + 40, 'PRIJAVA', {
-            fontFamily: 'Arial',
-            fontSize: '36px',
+        this.titleText = this.add.text(width / 2, panelY + 40, 'PRIJAVA', {
+            fontSize: '34px',
             fontStyle: 'bold',
             color: '#222'
         }).setOrigin(0.5);
@@ -82,157 +35,162 @@ export default class LoginScene extends Phaser.Scene {
         // input polji
         const inputWidth = 350;
         const inputHeight = 45;
-        const corner = 10;
 
-        const username = document.createElement('input');
-        username.type = 'text';
-        username.placeholder = 'Uporabniško ime';
-        username.style.position = 'absolute';
-        username.style.lineHeight = `${inputHeight}px`;
-        username.style.width = `${inputWidth}px`;
-        username.style.height = `${inputHeight}px`;
-        username.style.left = `${width / 2 - inputWidth / 2}px`;
-        username.style.top = `${panelY + 100}px`;
-        username.style.borderRadius = '8px';
-        username.style.padding = '5px';
-        username.style.border = '1px solid #ccc';
-        username.style.textAlign = 'center';
-        username.style.fontSize = '18px';
-        username.style.outline = 'none';
-        username.style.backgroundColor = '#f9f9f9';
-        document.body.appendChild(username);
+        this.usernameInput = document.createElement('input');
+        this.usernameInput.placeholder = 'Uporabniško ime';
 
-        const password = document.createElement('input');
-        password.type = 'password';
-        password.placeholder = 'Geslo';
-        password.style.position = 'absolute';
-        password.style.lineHeight = `${inputHeight}px`;
-        password.style.width = `${inputWidth}px`;
-        password.style.height = `${inputHeight}px`;
-        password.style.left = `${width / 2 - inputWidth / 2}px`;
-        password.style.top = `${panelY + 160}px`;
-        password.style.borderRadius = '8px';
-        password.style.padding = '5px';
-        password.style.border = '1px solid #ccc';
-        password.style.textAlign = 'center';
-        password.style.fontSize = '18px';
-        password.style.outline = 'none';
-        password.style.backgroundColor = '#f9f9f9';
-        document.body.appendChild(password);
+        this.passwordInput = document.createElement('input');
+        this.passwordInput.type = 'password';
+        this.passwordInput.placeholder = 'Geslo';
 
-        // const profilePic = document.createElement('input');
-        // profilePic.type = 'file';
-        // profilePic.accept = 'image/*';
-        // profilePic.style.position = 'absolute';
-        // profilePic.style.width = '400px';
-        // profilePic.style.left = '400px';
-        // profilePic.style.top = '290px';
-        // document.body.appendChild(profilePic);
+        this.firstNameInput = document.createElement('input');
+        this.firstNameInput.placeholder = 'Ime';
 
-        //console.log(profilePic);
+        this.lastNameInput = document.createElement('input');
+        this.lastNameInput.placeholder = 'Priimek';
 
-        const buttonWidth = 180;  
-        const buttonHeight = 45;  
-        const cornerRadius = 10;  
-        const buttonY = panelY + 270;
-        const rectX = width / 2;
+        [this.usernameInput, this.passwordInput, this.firstNameInput, this.lastNameInput].forEach((el, i) => {
+            el.style.position = 'absolute';
+            el.style.width = `${inputWidth}px`;
+            el.style.height = `${inputHeight}px`;
+            el.style.left = `${width / 2 - inputWidth / 2}px`;
+            el.style.top = `${panelY + 110 + i * 60}px`;
+            el.style.borderRadius = '8px';
+            el.style.border = '1px solid #ccc';
+            el.style.textAlign = 'center';
+            el.style.fontSize = '18px';
+            el.style.outline = 'none';
+            el.style.backgroundColor = '#f9f9f9';
+        });
 
-        const loginButtonBg = this.add.graphics();
-        loginButtonBg.fillStyle(0x3399ff, 1);
-        loginButtonBg.fillRoundedRect(
-            rectX - buttonWidth / 2,
-            buttonY - buttonHeight / 2,
-            buttonWidth,
-            buttonHeight,
-            cornerRadius
-        );
+        document.body.appendChild(this.usernameInput);
+        document.body.appendChild(this.passwordInput);
 
-        const loginButton = this.add.text(rectX, buttonY, '▶ Prijavi se', {
-            fontFamily: 'Arial',
+        const btnY = panelY + 270;
+        this.actionBtnBg = this.add.graphics();
+        this.drawActionButton(0x3399ff, width / 2, btnY);
+
+        this.actionBtnText = this.add.text(width / 2, btnY, '▶ Prijavi se', {
             fontSize: '24px',
             color: '#ffffff'
         })
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => {
-                loginButtonBg.clear();
-                loginButtonBg.fillStyle(0x0f5cad, 1);
-                loginButtonBg.fillRoundedRect(
-                    rectX - buttonWidth / 2,
-                    buttonY - buttonHeight / 2,
-                    buttonWidth,
-                    buttonHeight,
-                    cornerRadius
-                );
-            })
-            .on('pointerout', () => {
-                loginButtonBg.clear();
-                loginButtonBg.fillStyle(0x3399ff, 1);
-                loginButtonBg.fillRoundedRect(
-                    rectX - buttonWidth / 2,
-                    buttonY - buttonHeight / 2,
-                    buttonWidth,
-                    buttonHeight,
-                    cornerRadius
-                );
-            })
-            .on('pointerdown', () => {
-                const usernameTrim = username.value.trim();
-                const passwordTrim = password.value.trim();
-                const pfps = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11'];
-                const pfpKey = pfps[Math.floor(Math.random() * pfps.length)];
+            .on('pointerdown', () => this.submit());
 
-                if (usernameTrim && passwordTrim) {
-                    const existingUser = users.find(u => u.username == usernameTrim);
-                    if (existingUser) {
-                        if (existingUser.password !== passwordTrim) {
-                            alert('Napačno geslo!');
-                            return;
-                        }
-                    } else {
-                        users.push({ username: usernameTrim, password: passwordTrim, score: 0, profilePic: pfpKey });
-                        localStorage.setItem('users', JSON.stringify(users));
-                    }
-
-                    localStorage.setItem('username', usernameTrim);
-                    localStorage.setItem('profilePic', pfpKey);
-
-                    username.remove();
-                    password.remove();
-
-                    this.scene.start('LabScene');
-                } else {
-                    alert('Vnesi uporabniško ime in geslo!');
-                }
-            });
-
-        // počisti inpute ob izhodu
-        this.events.once('shutdown', () => {
-            username.remove();
-            password.remove();
-        });
-
-        const backButton = this.add.text(40, 30, '↩ Nazaj v meni', {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#0066ff',
-            // backgroundColor: '#e1e9ff',
-            padding: { x: 20, y: 10 }
-        })
-            .setOrigin(0, 0) // levo zgoraj
+        this.toggleText = this.add.text(width / 2, btnY + 55,
+            'Nimaš računa? Registracija',
+            { fontSize: '16px', color: '#0066ff' }
+        )
+            .setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => backButton.setStyle({ color: '#0044cc' }))
-            .on('pointerout', () => backButton.setStyle({ color: '#0066ff' }))
+            .on('pointerdown', () => this.toggleMode());
+
+        this.add.text(40, 30, '↩ Nazaj v meni', {
+            fontSize: '20px',
+            color: '#0066ff'
+        })
+            .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => {
-                username.remove();
-                password.remove();
+                this.cleanup();
                 this.scene.start('MenuScene');
             });
 
-        //localStorage.clear();
+        this.events.once('shutdown', () => this.cleanup());
+    }
 
-        // this.input.keyboard.on('keydown-ESC', () => {
-        //     this.scene.start('MenuScene');
-        // });
+    async submit() {
+        const username = this.usernameInput.value.trim();
+        const password = this.passwordInput.value.trim();
+
+        if (!username || !password) {
+            alert('Vnesi uporabniško ime in geslo!');
+            return;
+        }
+
+        try {
+            if (this.mode === 'login') {
+                const res = await window.api.loginPlayer({ username, password });
+
+                if (!res.success) {
+                    alert('Napačno uporabniško ime ali geslo.');
+                    return;
+                }
+
+                this.finishLogin(res.data);
+            } else {
+                const firstName = this.firstNameInput.value.trim();
+                const lastName = this.lastNameInput.value.trim();
+
+                if (!firstName || !lastName) {
+                    alert('Vnesi ime in priimek!');
+                    return;
+                }
+
+                const avatarIndex = Math.floor(Math.random() * 14) + 1;
+
+                const res = await window.api.registerPlayer({
+                    username,
+                    password,
+                    first_name: firstName,
+                    last_name: lastName,
+                    profilePic: `avatar${avatarIndex}`
+                });
+
+                if (!res.success) {
+                    alert(res.error || 'Registracija ni uspela');
+                    return;
+                }
+
+                this.finishLogin(res.data);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Napaka pri komunikaciji s strežnikom.');
+        }
+    }
+
+    finishLogin(user) {
+        this.cleanup();
+        this.scene.start('LabScene');
+    }
+
+    toggleMode() {
+        this.mode = this.mode === 'login' ? 'register' : 'login';
+
+        this.titleText.setText(
+            this.mode === 'login' ? 'PRIJAVA' : 'REGISTRACIJA'
+        );
+
+        this.actionBtnText.setText(
+            this.mode === 'login' ? '▶ Prijavi se' : '✔ Registriraj se'
+        );
+
+        this.toggleText.setText(
+            this.mode === 'login'
+                ? 'Nimaš računa? Registracija'
+                : 'Že imaš račun? Prijava'
+        );
+
+        if (this.mode === 'register') {
+            document.body.appendChild(this.firstNameInput);
+            document.body.appendChild(this.lastNameInput);
+        } else {
+            this.firstNameInput.remove();
+            this.lastNameInput.remove();
+        }
+    }
+
+    drawActionButton(color, x, y) {
+        this.actionBtnBg.clear();
+        this.actionBtnBg.fillStyle(color, 1);
+        this.actionBtnBg.fillRoundedRect(x - 90, y - 22, 180, 45, 10);
+    }
+
+    cleanup() {
+        this.usernameInput?.remove();
+        this.passwordInput?.remove();
+        this.firstNameInput?.remove();
+        this.lastNameInput?.remove();
     }
 }

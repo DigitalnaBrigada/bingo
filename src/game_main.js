@@ -38,6 +38,7 @@ const config = {
     },
     scene: [
         // uvoz scen
+        LoginScene,
         MenuScene,
         LabScene,
         WorkspaceScene,
@@ -49,7 +50,6 @@ const config = {
         PreloadScene,
         UIScene,
         TestScene,
-        LoginScene,
         ScoreboardScene,
 
         // nove scene
