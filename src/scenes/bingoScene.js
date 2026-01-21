@@ -36,7 +36,7 @@ export default class BingoScene extends Phaser.Scene {
     }
 
     async create() {
-        const { width, height } = this.scale;
+        const {width, height} = this.scale;
 
         this.add.rectangle(0, 0, width, height, 0xf1f5f9).setOrigin(0);
 
@@ -44,14 +44,14 @@ export default class BingoScene extends Phaser.Scene {
             fontSize: '22px',
             color: '#ffffff',
             backgroundColor: '#2563eb',
-            padding: { x: 18, y: 8 }
+            padding: {x: 18, y: 8}
         }).setOrigin(0.5);
 
         this.timerText = this.add.text(width - 90, 28, '⏱️ 15s', {
             fontSize: '16px',
             color: '#111827',
             backgroundColor: '#e5e7eb',
-            padding: { x: 12, y: 6 }
+            padding: {x: 12, y: 6}
         }).setOrigin(0.5);
 
         this.progressBg = this.add.rectangle(width / 2, 68, width - 140, 12, 0xe5e7eb).setOrigin(0.5);
@@ -70,7 +70,7 @@ export default class BingoScene extends Phaser.Scene {
         this.questionText = this.add.text(width / 2, 150, '', {
             fontSize: '20px',
             color: '#111827',
-            wordWrap: { width: width - 220 },
+            wordWrap: {width: width - 220},
             align: 'center'
         }).setOrigin(0.5);
 
@@ -91,29 +91,29 @@ export default class BingoScene extends Phaser.Scene {
             fontFamily: 'Arial',
             fontSize: '20px',
             color: '#387affff',
-            padding: { x: 20, y: 10 }
-            })
+            padding: {x: 20, y: 10}
+        })
             .setOrigin(0, 0)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => backButton.setStyle({ color: '#0054fdff' }))
-            .on('pointerout', () => backButton.setStyle({ color: '#387affff' }))
+            .setInteractive({useHandCursor: true})
+            .on('pointerover', () => backButton.setStyle({color: '#0054fdff'}))
+            .on('pointerout', () => backButton.setStyle({color: '#387affff'}))
             .on('pointerdown', () => {
                 this.cameras.main.fade(300, 0, 0, 0);
                 this.time.delayedCall(300, () => {
-                this.scene.start('LabScene');
+                    this.scene.start('LabScene');
+                });
             });
-        });
 
 // Ejlien
         this.alien = this.add.container(
             this.questionBox.x,
-            this.questionBox.y+150
+            this.questionBox.y + 150
         );
         this.alien.setVisible(false);
 
         // Head
         const head = this.add.ellipse(0, 0, 64, 90, 0x22c55e)
-           .setStrokeStyle(3, 0x166534);
+            .setStrokeStyle(3, 0x166534);
 
 
         // Eyes
@@ -153,9 +153,11 @@ export default class BingoScene extends Phaser.Scene {
 
     async loadGame() {
         this.playerNames = [localStorage.getItem('username'), 'Alien'];
-        this.playerIds = [1, 2];
+        this.playerIds = [1, (await window.api.getCurrentUser()).id];
+        console.log(this.playerIds)
 
-        const game = await window.api.startGame(1, [1, 2], this.playerIds);
+        const settings = JSON.parse(localStorage.getItem('settings'))
+        const game = await window.api.startGame(settings.selected_grade, settings.selected_categories, this.playerIds);
         this.gameData = Phaser.Utils.Array.Shuffle(game.questions || []);
         this.boards = game.players.map(p => p.board);
         this.limitIndex = this.gameData.length - 1;
@@ -202,7 +204,7 @@ export default class BingoScene extends Phaser.Scene {
             btn.container.disableInteractive();
 
             if (isHumanTurn) {
-                btn.container.setInteractive({ useHandCursor: true });
+                btn.container.setInteractive({useHandCursor: true});
                 btn.container.setAlpha(1);
             } else {
                 btn.container.setAlpha(0.5);
@@ -237,22 +239,24 @@ export default class BingoScene extends Phaser.Scene {
     createAnswerButton(x, y, index) {
         const container = this.add.rectangle(x, y, 340, 64, 0xffffff)
             .setStrokeStyle(2, 0xd1d5db)
-            .setInteractive({ useHandCursor: true });
+            .setInteractive({useHandCursor: true});
 
         const text = this.add.text(x, y, '', {
             fontSize: '17px',
             color: '#111827',
-            wordWrap: { width: 300 },
+            wordWrap: {width: 300},
             align: 'center'
         }).setOrigin(0.5);
 
-        const btn = { container, text, enabled: true };
+        const btn = {container, text, enabled: true};
 
         container.on('pointerdown', async () => {
-            if (this.gameOver){ return; }
-            if(!btn.enabled && this.currentPlayer===0){
+            if (this.gameOver) {
                 return;
-            } 
+            }
+            if (!btn.enabled && this.currentPlayer === 0) {
+                return;
+            }
             btn.enabled = false;
             try {
                 const result = await window.api.answer(
@@ -273,7 +277,8 @@ export default class BingoScene extends Phaser.Scene {
                     this.endGame(this.currentPlayer);
                     return;
                 }
-            } catch (e) {}
+            } catch (e) {
+            }
 
             this.time.delayedCall(900, () => this.nextQuestion());
         });
@@ -349,15 +354,15 @@ export default class BingoScene extends Phaser.Scene {
                     const label = this.add.text(
                         cx, cy,
                         isCenter ? '★' : String(n),
-                        { fontSize: isCenter ? '22px' : '16px', color: '#111827' }
+                        {fontSize: isCenter ? '22px' : '16px', color: '#111827'}
                     ).setOrigin(0.5);
 
-                    cells.push({ cell, label });
+                    cells.push({cell, label});
                     n++;
                 }
             }
 
-            this.boardContainers.push({ panel, title, cells });
+            this.boardContainers.push({panel, title, cells});
         });
     }
 
@@ -386,26 +391,24 @@ export default class BingoScene extends Phaser.Scene {
         });
     }
 
-endGame(winnerIdx) {
-    this.gameOver = true;
+    endGame(winnerIdx) {
+        this.gameOver = true;
 
-    if (this.timerEvent) {
-        this.timerEvent.remove();
-        this.timerEvent = null;
+        if (this.timerEvent) {
+            this.timerEvent.remove();
+            this.timerEvent = null;
+        }
+
+        this.cameras.main.fade(300, 0, 0, 0);
+
+        this.time.delayedCall(300, () => {
+            if (winnerIdx === 0) {
+                this.scene.start('EscapeScene');
+            } else {
+                this.scene.start('losingScene');
+            }
+        });
     }
-
-    this.cameras.main.fade(300, 0, 0, 0);
-
-    this.time.delayedCall(300, () => {
-        if (winnerIdx === 0) {
-            this.scene.start('EscapeScene');
-        }
-        else {
-            this.scene.start('losingScene');
-        }
-    });
-}
-
 
 
 }

@@ -5,6 +5,7 @@ export default class LabScene extends Phaser.Scene {
     bingoSettingsOpen = false;
     settingsGrades = [];
     settingsCategories = [];
+    settingsInit = false;
 
     constructor() {
         super('LabScene');
@@ -27,6 +28,14 @@ export default class LabScene extends Phaser.Scene {
         const {grades, categories} = await window.api.settingsMenu();
         this.settingsGrades = grades;
         this.settingsCategories = categories;
+        const uniqueCategories = [...new Set(categories.map(q => q.id))];
+        const settings = {
+            selected_grade: 4,
+            selected_categories: uniqueCategories
+        };
+
+        localStorage.setItem('settings', JSON.stringify(settings));
+
     }
 
     async create() {
@@ -835,8 +844,6 @@ export default class LabScene extends Phaser.Scene {
 
     handleSubmit() {
         this.hideModal();
-        this.scene.start('BingoScene');
-        return;
 
         if (this.pincode.length === 0) return;
         if (this.pincode === '27421816') {
@@ -887,9 +894,18 @@ export default class LabScene extends Phaser.Scene {
                 pointer.event.clientY < modalRect.top ||
                 pointer.event.clientY > modalRect.bottom
             ) {
+                const settings = {
+                    selected_grade: 4,
+                    selected_categories: [...selectedCategories]
+                };
+
+                localStorage.setItem('settings', JSON.stringify(settings));
+
+
                 domElement.destroy();
                 overlay.destroy();
                 this.bingoSettingsOpen = false;
+
             }
         });
 
@@ -921,11 +937,8 @@ export default class LabScene extends Phaser.Scene {
             gradeCardsContainer.appendChild(div);
 
             if (index === 0) {
-                console.log("index 0 selected")
                 div.classList.add("border-blue-500", "bg-blue-50", "shadow-md");
-                console.log(div.classList)
                 selectedGrade = g.id;
-                console.log(selectedGrade)
             }
         });
 
@@ -947,10 +960,16 @@ export default class LabScene extends Phaser.Scene {
                 }
             });
             categoryCardsContainer.appendChild(div);
-
-            selectedCategories.add(c.id);
-            div.classList.add("border-green-500", "bg-green-50", "shadow-md");
+            if ((!this.settingsInit) || JSON.parse(localStorage.getItem('settings')).selected_categories.includes(c.id)) {
+                selectedCategories.add(c.id);
+                div.classList.add("border-green-500", "bg-green-50", "shadow-md");
+            } else {
+                div.classList.add("border-gray-200", "bg-white");
+            }
         });
+        if (!this.settingsInit){
+            this.settingsInit = true;
+        }
 
         window.api.settingsMenu().then(r => {
             this.settingsGrades = r.grades;
