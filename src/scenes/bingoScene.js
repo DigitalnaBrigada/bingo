@@ -104,7 +104,7 @@ export default class BingoScene extends Phaser.Scene {
             });
         });
 
-        // Ejlien
+// Ejlien
         this.alien = this.add.container(
             this.questionBox.x,
             this.questionBox.y+150
@@ -112,18 +112,26 @@ export default class BingoScene extends Phaser.Scene {
         this.alien.setVisible(false);
 
         // Head
-        const head = this.add.circle(0, 0, 36, 0x22c55e)
-            .setStrokeStyle(3, 0x166534);
+        const head = this.add.ellipse(0, 0, 64, 90, 0x22c55e)
+           .setStrokeStyle(3, 0x166534);
+
 
         // Eyes
-        const eyeLeft = this.add.circle(-18, -16, 6, 0x000000);
-        const eyeRight = this.add.circle(18, -16, 6, 0x000000);
+        const eyeLeft = this.add.circle(-16, -22, 6, 0x000000);
+        const eyeRight = this.add.circle(16, -22, 6, 0x000000);
+        const browLeft = this.add.rectangle(10, -30, 18, 4, 0x111111)
+            .setRotation(-0.7);
+        const browRight = this.add.rectangle(-10, -30, 18, 4, 0x111111)
+            .setRotation(0.7);
 
         // Antennas
-        const antennaLeft = this.add.rectangle(-20, -30, 4, 18, 0x166534);
-        const antennaRight = this.add.rectangle(20, -30, 4, 18, 0x166534);
-        const antennaTipLeft = this.add.circle(-20, -40, 4, 0x22c55e);
-        const antennaTipRight = this.add.circle(20, -40, 4, 0x22c55e);
+        const antennaLeft = this.add.rectangle(-20, -40, 4, 18, 0x166534);
+        const antennaRight = this.add.rectangle(20, -40, 4, 18, 0x166534);
+        const antennaTipLeft = this.add.circle(-20, -50, 4, 0x22c55e);
+        const antennaTipRight = this.add.circle(20, -50, 4, 0x22c55e);
+
+        // Mouth
+        const mouthLeft = this.add.rectangle(0, 15, 30, 4, 0x111111);
 
         // Add to container
         this.alien.add([
@@ -133,8 +141,11 @@ export default class BingoScene extends Phaser.Scene {
             antennaTipRight,
             head,
             eyeLeft,
-            eyeRight
-]);
+            eyeRight,
+            browLeft,
+            browRight,
+            mouthLeft
+        ]);
 
 
         await this.loadGame();
@@ -375,30 +386,26 @@ export default class BingoScene extends Phaser.Scene {
         });
     }
 
-    endGame(winnerIdx) {
-        this.gameOver = true;
-        if (this.timerEvent) this.timerEvent.remove();
+endGame(winnerIdx) {
+    this.gameOver = true;
 
-        const { width, height } = this.scale;
-
-        this.add.rectangle(0, 0, width, height, 0x000000, 0.4).setOrigin(0);
-
-        this.add.rectangle(width / 2, height / 2, 420, 240, 0xffffff)
-            .setStrokeStyle(2, 0xd1d5db);
-
-        this.add.text(width / 2, height / 2 - 40,
-            `${this.playerNames[winnerIdx]} je zmagal! 🏆`,
-            { fontSize: '22px', color: '#111827' }
-        ).setOrigin(0.5);
-
-        const btn = this.add.rectangle(width / 2, height / 2 + 60, 220, 54, 0x2563eb)
-            .setInteractive({ useHandCursor: true });
-
-        this.add.text(width / 2, height / 2 + 60, 'Nova igra', {
-            fontSize: '17px',
-            color: '#ffffff'
-        }).setOrigin(0.5);
-
-        btn.on('pointerdown', () => this.scene.start('EscapeScene'));
+    if (this.timerEvent) {
+        this.timerEvent.remove();
+        this.timerEvent = null;
     }
+
+    this.cameras.main.fade(300, 0, 0, 0);
+
+    this.time.delayedCall(300, () => {
+        if (winnerIdx === 0) {
+            this.scene.start('EscapeScene');
+        }
+        else {
+            this.scene.start('losingScene');
+        }
+    });
+}
+
+
+
 }
