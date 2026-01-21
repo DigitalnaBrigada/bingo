@@ -19,6 +19,32 @@ export default class BingoScene extends Phaser.Scene {
         this.timerEvent = null;
     }
 
+    startRainbowAnimation(btn) {
+        const colors = [
+            0xff0000, // red
+            0xffff00, // yellow
+            0x90ee90, // light green
+            0xadd8e6, // light blue
+            0xddddfd  // light purple
+        ];
+
+        let index = 0;
+
+        if (btn.rainbowEvent) {
+            btn.rainbowEvent.remove();
+        }
+
+        btn.rainbowEvent = this.time.addEvent({
+            delay: 150,
+            loop: true,
+            callback: () => {
+                btn.container.setFillStyle(colors[index]);
+                index = (index + 1) % colors.length;
+            }
+        });
+    }
+
+
     async create() {
         const { width, height } = this.scale;
 
@@ -84,18 +110,15 @@ export default class BingoScene extends Phaser.Scene {
     /* ================= GAME INIT ================= */
 
     async loadGame() {
-        const params = JSON.parse(localStorage.getItem('parameters'));
-
-        this.players = params.players;
-        this.playerNames = params.players.map(p => `${p.first_name} ${p.last_name}`);
-        this.playerIds = params.players.map(p => parseInt(p.id));
+        this.playerNames = [localStorage.getItem('username'), 'Alien'];
+        this.playerIds = [1, 2];
 
         const game = await window.api.startGame(
-            params.grade,
-            params.category,
+            1,
+            [1, 2],
             this.playerIds
         );
-
+        console.log('Game started:', game);
         this.gameData = Phaser.Utils.Array.Shuffle(game.questions || []);
         this.boards = game.players.map(p => p.board);
         this.limitIndex = this.gameData.length - 1;
@@ -115,7 +138,7 @@ export default class BingoScene extends Phaser.Scene {
         const q = this.gameData[this.questionIndex];
         this.currentPlayer = this.questionIndex % this.playerNames.length;
 
-        this.turnText.setText(`${this.playerNames[this.currentPlayer]} je na vrsti`);
+        this.turnText.setText(`${this.playerNames[this.currentPlayer]}'s turn`);
         this.questionText.setText(q.text);
 
         this.answerButtons.forEach((btn, i) => {
@@ -123,14 +146,19 @@ export default class BingoScene extends Phaser.Scene {
             btn.container.setAlpha(1);
             btn.container.setFillStyle(0xffffff);
             btn.enabled = true;
+
+            if (btn.rainbowEvent) {
+                btn.rainbowEvent.remove();
+                btn.rainbowEvent = null;
+            }
         });
+
 
         this.startTimer();
         this.highlightTurn();
     }
 
     /* ================= ANSWERS ================= */
-
     createAnswerButton(x, y, index) {
         const container = this.add.rectangle(x, y, 300, 60, 0xffffff)
             .setStrokeStyle(2, 0xd1d5db)
@@ -149,14 +177,18 @@ export default class BingoScene extends Phaser.Scene {
             if (!btn.enabled || this.gameOver) return;
             btn.enabled = false;
 
-            container.setFillStyle(0xdbeafe);
-
             try {
                 const result = await window.api.answer(
                     this.currentPlayer,
                     this.gameData[this.questionIndex].id,
                     index
                 );
+                console.log('Answer result:', result);
+                if(result.correct) {
+                    this.startRainbowAnimation(btn);
+                } else {
+                    btn.container.setFillStyle(0xef4444); // Red for incorrect
+                }
 
                 if (Array.isArray(result?.board)) {
                     this.boards[this.currentPlayer] = result.board;
@@ -220,8 +252,8 @@ export default class BingoScene extends Phaser.Scene {
     /* ================= BOARDS ================= */
 
     renderBoards() {
-        const startY = 420;
-        const spacingX = 260;
+        const startY = 600;
+        const spacingX = 300;
 
         this.boardContainers = [];
 
@@ -273,7 +305,6 @@ export default class BingoScene extends Phaser.Scene {
     updateBoard(playerIdx) {
         const board = this.boards[playerIdx];
         const ui = this.boardContainers[playerIdx];
-
         let i = 0;
         for (let r = 0; r < 5; r++) {
             for (let c = 0; c < 5; c++) {

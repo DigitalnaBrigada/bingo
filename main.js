@@ -262,7 +262,6 @@ ipcMain.handle('startGame', async (event, { group, categories, players }) => {
             .select('id, text, answers, image_path, category_id, age_group_id')
             .eq('age_group_id', group)
             .in('category_id', categories);
-
         if (error) throw error;
 
         const questions = data.map(q => ({
