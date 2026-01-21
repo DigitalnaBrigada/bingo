@@ -3,12 +3,14 @@ import Phaser from 'phaser';
 export default class LabScene extends Phaser.Scene {
     modalElement;
     bingoSettingsOpen = false;
+    settingsGrades = [];
+    settingsCategories = [];
 
     constructor() {
         super('LabScene');
     }
 
-    preload() {
+    async preload() {
         this.load.image('avatar1', 'src/avatars/avatar1.png');
         this.load.image('avatar2', 'src/avatars/avatar2.png');
         this.load.image('avatar3', 'src/avatars/avatar3.png');
@@ -22,6 +24,9 @@ export default class LabScene extends Phaser.Scene {
         this.load.image('avatar11', 'src/avatars/avatar11.png');
         this.load.image('potion', 'src/assets/potion.png');
         this.load.image('telescope', 'src/assets/telescope.png');
+        const {grades, categories} = await window.api.settingsMenu();
+        this.settingsGrades = grades;
+        this.settingsCategories = categories;
     }
 
     async create() {
@@ -312,10 +317,10 @@ export default class LabScene extends Phaser.Scene {
 
         const settingButtonBg = this.add.graphics();
         settingButtonBg.fillStyle(0x3399ff, 1);
-        const settingButtonX = width - 2 * buttonWidth - 2* rightMargin;
+        const settingButtonX = width - 2 * buttonWidth - 2 * rightMargin;
         settingButtonBg.fillRoundedRect(settingButtonX, topMargin, buttonWidth, buttonHeight, cornerRadius);
 
-        const settingButton = this.add.text(settingButtonX + 1/2 * buttonWidth, topMargin + buttonHeight / 2, 'Nastavitve', {
+        const settingButton = this.add.text(settingButtonX + 1 / 2 * buttonWidth, topMargin + buttonHeight / 2, 'Nastavitve', {
             fontFamily: 'Arial',
             fontSize: '20px',
             color: '#ffffff'
@@ -869,7 +874,7 @@ export default class LabScene extends Phaser.Scene {
             .setInteractive();
         const domElement = this.add.dom(width / 2, height / 3)
             .createFromHTML(this.menuHTML());
-        domElement.setOrigin(0.25);
+        domElement.setOrigin(0.75);
 
         overlay.setDepth(1000);
         domElement.setDepth(1001);
@@ -898,12 +903,10 @@ export default class LabScene extends Phaser.Scene {
         let selectedGrade = null;
         const selectedCategories = new Set();
 
-        const { grades, categories } = await window.api.settingsMenu();
-
-        grades.forEach((g, index) => {
+        this.settingsGrades.forEach((g, index) => {
             const div = document.createElement("div");
             div.dataset.id = g.id;
-            div.className = "p-4 border-2 border-gray-200 rounded-xl cursor-pointer transition-all hover:scale-105 hover:shadow-lg text-center";
+            div.className = "p-4 border-2 rounded-xl cursor-pointer transition-all hover:scale-105 hover:shadow-lg text-center";
             div.innerHTML = `<h3 class="font-semibold text-lg mb-1">${g.age_group}</h3>
                          <p class="text-sm text-gray-500">Leta ${g.min_age} – ${g.max_age}</p>`;
             div.addEventListener("click", () => {
@@ -918,12 +921,15 @@ export default class LabScene extends Phaser.Scene {
             gradeCardsContainer.appendChild(div);
 
             if (index === 0) {
+                console.log("index 0 selected")
                 div.classList.add("border-blue-500", "bg-blue-50", "shadow-md");
+                console.log(div.classList)
                 selectedGrade = g.id;
+                console.log(selectedGrade)
             }
         });
 
-        categories.forEach((c) => {
+        this.settingsCategories.forEach((c) => {
             const div = document.createElement("div");
             div.dataset.id = c.id;
             div.className = "p-4 border-2 border-gray-200 rounded-xl cursor-pointer transition-all hover:scale-105 hover:shadow-lg";
@@ -945,9 +951,19 @@ export default class LabScene extends Phaser.Scene {
             selectedCategories.add(c.id);
             div.classList.add("border-green-500", "bg-green-50", "shadow-md");
         });
+
+        window.api.settingsMenu().then(r => {
+            this.settingsGrades = r.grades;
+            this.settingsCategories = r.categories;
+        });
+
+
+
+
     }
-        menuHTML() {
-            return `
+
+    menuHTML() {
+        return `
 <main class="w-full max-w-xl bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-6 space-y-6 font-sans">
     <header class="text-center space-y-2">
         <h1 class="text-3xl font-bold text-gray-800">Nastavitve</h1>
