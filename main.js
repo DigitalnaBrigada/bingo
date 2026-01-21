@@ -6,7 +6,7 @@ const path = require('node:path');
 const {createClient} = require("@supabase/supabase-js");
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
-let win, add_player_window;
+let win, add_player_window, bingo_settings_window;
 
 const createWindow = () => {
     win = new BrowserWindow({
@@ -118,6 +118,47 @@ ipcMain.handle('login-player', async (_, creds) => {
         return { success: false, error: err.message };
     }
 });
+
+ipcMain.handle('settings-menu', async () => {
+    try {
+        const { data: grades, error: gradesError } = await supabase
+            .from('AgeGroups')
+            .select('*')
+            .eq('id', 4)
+
+        if (gradesError) {
+            console.error('Error fetching grades:', gradesError);
+            return;
+        }
+
+        const { data: categoryIds, error: catError } = await supabase
+            .from('Questions')
+            .select('category_id')
+            .eq('age_group_id', 4)
+            .order('category_id', { ascending: true });
+
+        if (catError) {
+            console.error('Error fetching unique categories:', catError);
+            return;
+        }
+        const uniqueCategories = [...new Set(categoryIds.map(q => q.category_id))];
+
+        const {data: categories, error: categoriesError} = await supabase
+            .from('Category')
+            .select('*')
+            .in('id', uniqueCategories)
+            .order('id', { ascending: true });
+
+        if (categoriesError) {
+            console.error('Error fetching categories:', categoriesError);
+            return;
+        }
+
+        return {grades, categories };
+    } catch (err) {
+        return {error: err.message};
+    }
+})
 
 let currentGame = null;
 

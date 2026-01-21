@@ -2,12 +2,15 @@ import Phaser from 'phaser';
 
 export default class LabScene extends Phaser.Scene {
     modalElement;
+    bingoSettingsOpen = false;
+    settingsGrades = [];
+    settingsCategories = [];
 
     constructor() {
         super('LabScene');
     }
 
-    preload() {
+    async preload() {
         this.load.image('avatar1', 'src/avatars/avatar1.png');
         this.load.image('avatar2', 'src/avatars/avatar2.png');
         this.load.image('avatar3', 'src/avatars/avatar3.png');
@@ -21,6 +24,9 @@ export default class LabScene extends Phaser.Scene {
         this.load.image('avatar11', 'src/avatars/avatar11.png');
         this.load.image('potion', 'src/assets/potion.png');
         this.load.image('telescope', 'src/assets/telescope.png');
+        const {grades, categories} = await window.api.settingsMenu();
+        this.settingsGrades = grades;
+        this.settingsCategories = categories;
     }
 
     async create() {
@@ -53,7 +59,7 @@ export default class LabScene extends Phaser.Scene {
             .setInteractive({useHandCursor: true});
 
         telescope.on('pointerdown', () => {
-            if (this.modalElement && this.modalElement.style.display === 'flex') {
+            if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                 return;
             }
             this.cameras.main.fade(300, 0, 0, 0);
@@ -155,7 +161,7 @@ export default class LabScene extends Phaser.Scene {
         // interaktivni zaslon
         screen.setInteractive({useHandCursor: true});
         screen.on('pointerdown', () => {
-            if (this.modalElement && this.modalElement.style.display === 'flex') {
+            if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                 return;
             }
             this.scene.start('DesktopScene');
@@ -268,7 +274,7 @@ export default class LabScene extends Phaser.Scene {
             .on('pointerover', () => logoutButton.setStyle({color: '#0044cc'}))
             .on('pointerout', () => logoutButton.setStyle({color: '#0066ff'}))
             .on('pointerdown', () => {
-                if (this.modalElement && this.modalElement.style.display === 'flex') {
+                if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                     return;
                 }
                 this.scene.start('LoginScene');
@@ -303,10 +309,36 @@ export default class LabScene extends Phaser.Scene {
                 scoreButtonBg.fillRoundedRect(width - buttonWidth - rightMargin, topMargin, buttonWidth, buttonHeight, cornerRadius);
             })
             .on('pointerdown', () => {
-                if (this.modalElement && this.modalElement.style.display === 'flex') {
+                if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                     return;
                 }
                 this.scene.start('ScoreboardScene', {cameFromMenu: true});
+            });
+
+        const settingButtonBg = this.add.graphics();
+        settingButtonBg.fillStyle(0x3399ff, 1);
+        const settingButtonX = width - 2 * buttonWidth - 2 * rightMargin;
+        settingButtonBg.fillRoundedRect(settingButtonX, topMargin, buttonWidth, buttonHeight, cornerRadius);
+
+        const settingButton = this.add.text(settingButtonX + 1 / 2 * buttonWidth, topMargin + buttonHeight / 2, 'Nastavitve', {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#ffffff'
+        })
+            .setOrigin(0.5)
+            .setInteractive({useHandCursor: true})
+            .on('pointerover', () => {
+                settingButtonBg.clear();
+                settingButtonBg.fillStyle(0x0f5cad, 1);
+                settingButtonBg.fillRoundedRect(settingButtonX, topMargin, buttonWidth, buttonHeight, cornerRadius);
+            })
+            .on('pointerout', () => {
+                settingButtonBg.clear();
+                settingButtonBg.fillStyle(0x3399ff, 1);
+                settingButtonBg.fillRoundedRect(settingButtonX, topMargin, buttonWidth, buttonHeight, cornerRadius);
+            })
+            .on('pointerdown', async () => {
+                this.showSettingsModal();
             });
 
         // Odstranjeni gumbi Naloga 1 in Naloga 5
@@ -317,7 +349,7 @@ export default class LabScene extends Phaser.Scene {
             .setScale(0.35)
             .setInteractive({useHandCursor: true})
             .on('pointerdown', () => {
-                if (this.modalElement && this.modalElement.style.display === 'flex') {
+                if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                     return;
                 }
                 this.scene.start('ChemistryScene1');
@@ -405,7 +437,7 @@ export default class LabScene extends Phaser.Scene {
         abacusContainer.add(zone);
 
         zone.on('pointerdown', () => {
-            if (this.modalElement && this.modalElement.style.display === 'flex') {
+            if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                 return;
             }
             this.cameras.main.fade(300, 0, 0, 0);
@@ -592,7 +624,7 @@ export default class LabScene extends Phaser.Scene {
         const led2 = this.add.circle(x + width * 0.005, y + keypadHeight * 0.45, width * 0.002, 0x4b5563);
 
         this.keypadButton.on('pointerdown', () => {
-            if (this.modalElement && this.modalElement.style.display === 'flex') {
+            if ((this.modalElement && this.modalElement.style.display === 'flex') || this.bingoSettingsOpen) {
                 return;
             }
             this.showModal();
@@ -832,6 +864,127 @@ export default class LabScene extends Phaser.Scene {
         if (messageEl) {
             messageEl.style.display = 'none';
         }
+    }
+
+    async showSettingsModal() {
+        this.bingoSettingsOpen = true;
+        const {width, height} = this.scale;
+        const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.5)
+            .setOrigin(0)
+            .setInteractive();
+        const domElement = this.add.dom(width / 2, height / 3)
+            .createFromHTML(this.menuHTML());
+        domElement.setOrigin(0.75);
+
+        overlay.setDepth(1000);
+        domElement.setDepth(1001);
+
+        overlay.on('pointerdown', (pointer) => {
+            const modalRect = domElement.node.getBoundingClientRect();
+            if (
+                pointer.event.clientX < modalRect.left ||
+                pointer.event.clientX > modalRect.right ||
+                pointer.event.clientY < modalRect.top ||
+                pointer.event.clientY > modalRect.bottom
+            ) {
+                domElement.destroy();
+                overlay.destroy();
+                this.bingoSettingsOpen = false;
+            }
+        });
+
+        domElement.node.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+        });
+
+        const gradeCardsContainer = domElement.node.querySelector("#grade-cards");
+        const categoryCardsContainer = domElement.node.querySelector("#category-cards");
+
+        let selectedGrade = null;
+        const selectedCategories = new Set();
+
+        this.settingsGrades.forEach((g, index) => {
+            const div = document.createElement("div");
+            div.dataset.id = g.id;
+            div.className = "p-4 border-2 rounded-xl cursor-pointer transition-all hover:scale-105 hover:shadow-lg text-center";
+            div.innerHTML = `<h3 class="font-semibold text-lg mb-1">${g.age_group}</h3>
+                         <p class="text-sm text-gray-500">Leta ${g.min_age} – ${g.max_age}</p>`;
+            div.addEventListener("click", () => {
+                if (selectedGrade === g.id) return;
+                gradeCardsContainer.querySelectorAll("div").forEach(el => {
+                    el.classList.remove("border-blue-500", "bg-blue-50", "shadow-md");
+                    el.classList.add("border-gray-200", "bg-white");
+                });
+                div.classList.add("border-blue-500", "bg-blue-50", "shadow-md");
+                selectedGrade = g.id;
+            });
+            gradeCardsContainer.appendChild(div);
+
+            if (index === 0) {
+                console.log("index 0 selected")
+                div.classList.add("border-blue-500", "bg-blue-50", "shadow-md");
+                console.log(div.classList)
+                selectedGrade = g.id;
+                console.log(selectedGrade)
+            }
+        });
+
+        this.settingsCategories.forEach((c) => {
+            const div = document.createElement("div");
+            div.dataset.id = c.id;
+            div.className = "p-4 border-2 border-gray-200 rounded-xl cursor-pointer transition-all hover:scale-105 hover:shadow-lg";
+            div.innerHTML = `<h3 class="font-semibold text-lg">${c.name}</h3>`;
+            div.addEventListener("click", () => {
+                if (selectedCategories.has(c.id)) {
+                    if (selectedCategories.size === 1) return;
+                    selectedCategories.delete(c.id);
+                    div.classList.remove("border-green-500", "bg-green-50", "shadow-md");
+                    div.classList.add("border-gray-200", "bg-white");
+                } else {
+                    selectedCategories.add(c.id);
+                    div.classList.remove("border-gray-200", "bg-white");
+                    div.classList.add("border-green-500", "bg-green-50", "shadow-md");
+                }
+            });
+            categoryCardsContainer.appendChild(div);
+
+            selectedCategories.add(c.id);
+            div.classList.add("border-green-500", "bg-green-50", "shadow-md");
+        });
+
+        window.api.settingsMenu().then(r => {
+            this.settingsGrades = r.grades;
+            this.settingsCategories = r.categories;
+        });
+
+
+
+
+    }
+
+    menuHTML() {
+        return `
+<main class="w-full max-w-xl bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-6 space-y-6 font-sans">
+    <header class="text-center space-y-2">
+        <h1 class="text-3xl font-bold text-gray-800">Nastavitve</h1>
+        <h2 class="text-xl font-bold text-gray-800">Bingo Kviza</h2>
+    </header>
+
+    <section>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Izberi težavnost</label>
+        <div id="grade-cards" class="grid grid-cols-1 sm:grid-cols-1 gap-2 text-center"></div>
+    </section>
+
+    <section>
+        <label class="block text-sm font-semibold text-gray-700 mb-3">Izberi predmet (vsaj 1)</label>
+        <div id="category-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+    </section>
+
+    <footer class="pt-6 text-center text-sm text-gray-500 border-t border-gray-200">
+        <span class="font-semibold">Digitalna Brigada</span>
+    </footer>
+</main>
+        `;
     }
 
 }
