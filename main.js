@@ -73,17 +73,23 @@ ipcMain.on('open-add-player', () => {
     createAddPlayerWindow();
 });
 
+let currentUser = null;
+ipcMain.handle('get-current-user', () => {
+    return currentUser;
+});
+
 ipcMain.handle('register-player', async (_, player) => {
     try {
         const { data, error } = await supabase
             .from('User')
             .insert(player)
-            .select()
+            .select('username, first_name, last_name, profile_picture')
             .single();
         if (error) throw error;
 
-        win.webContents.send('player-added', data);
-        add_player_window?.close();
+        // win.webContents.send('player-added', data);
+        // add_player_window?.close();
+        currentUser = data;
         return { success: true, data };
     } catch (err) {
         console.error('Error registering player:', err.message);
@@ -95,7 +101,7 @@ ipcMain.handle('login-player', async (_, creds) => {
     try {
         const { data, error } = await supabase
             .from('User')
-            .select('*')
+            .select('username, first_name, last_name, profile_picture')
             .eq('username', creds.username)
             .eq('password', creds.password)
             .maybeSingle();
@@ -103,8 +109,9 @@ ipcMain.handle('login-player', async (_, creds) => {
 
         if (!data) return { success: false, error: 'Invalid username or password' };
 
-        win.webContents.send('player-added', data);
-        add_player_window?.close();
+        // win.webContents.send('player-added', data);
+        // add_player_window?.close();
+        currentUser = data;
         return { success: true, data };
     } catch (err) {
         console.error('Error logging in player:', err.message);

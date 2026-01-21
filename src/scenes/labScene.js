@@ -23,7 +23,7 @@ export default class LabScene extends Phaser.Scene {
         this.load.image('telescope', 'src/assets/telescope.png');
     }
 
-    create() {
+    async create() {
         const {width, height} = this.cameras.main;
 
         // ozadje laboratorija
@@ -226,8 +226,8 @@ export default class LabScene extends Phaser.Scene {
             tableSurface.setFillStyle(0xa0826d);
         });
 
-        const username = localStorage.getItem('username');
-        const pfp = localStorage.getItem('profilePic');
+        const user = await window.api.getCurrentUser();
+        const pfp = user.profile_picture || 'avatar1';
 
         // avvatar
         const avatarX = 230;
@@ -250,7 +250,7 @@ export default class LabScene extends Phaser.Scene {
         avatarImage.setMask(mask);
 
         // pozdravno besedilo
-        this.add.text(avatarX + 60, avatarY - 10, `Dobrodošel v laboratoriju, uporabnik ${username}!`, {
+        this.add.text(avatarX + 60, avatarY - 10, `Dobrodošel v laboratoriju, uporabnik ${user.username}!`, {
             fontSize: '22px',
             color: '#222',
             fontStyle: 'bold'
@@ -271,8 +271,7 @@ export default class LabScene extends Phaser.Scene {
                 if (this.modalElement && this.modalElement.style.display === 'flex') {
                     return;
                 }
-                localStorage.removeItem('username');
-                this.scene.start('MenuScene');
+                this.scene.start('LoginScene');
             });
 
         const buttonWidth = 180;
