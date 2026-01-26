@@ -259,10 +259,9 @@ ipcMain.handle('startGame', async (event, { group, categories, players }) => {
         // Fetch questions
         const { data, error } = await supabase
             .from('Questions')
-            .select('id, text, answers, image_path, category_id, age_group_id')
+            .select('id, text, answers, image_path, category_id, age_group_id, correct_answer')
             .eq('age_group_id', group)
             .in('category_id', categories);
-
         if (error) throw error;
 
         const questions = data.map(q => ({
@@ -271,7 +270,8 @@ ipcMain.handle('startGame', async (event, { group, categories, players }) => {
             options: q.answers,
             image_path: q.image_path,
             category_id: q.category_id,
-            age_group_id: q.age_group_id
+            age_group_id: q.age_group_id,
+            correctIndex: q.correct_answer
         }));
 
         currentGame = {

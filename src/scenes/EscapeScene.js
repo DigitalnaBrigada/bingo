@@ -27,7 +27,7 @@ export default class EscapeScene extends Phaser.Scene {
             'S svojim znanjem si deaktiviral nevarnosti laboratorija,\nstabiliziral reaktor in našel pot do izhoda.\n' +
             '\n' +
             'Pobeg iz Area 51 je uspel.\n' +
-            'Tvoja misija je končana – in dokazal si, da si pripravljen tudi na najtežje\nmaturitetne izzive.',   // text
+            'Tvoja misija je končana – in dokazal si, da si pripravljen tudi na najtežje izzive.',   // text
             {
                 fontSize: '32px',
                 color: '#000000'
